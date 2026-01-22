@@ -16,6 +16,9 @@ import pricesRoutes from "./routes/prices.js";
 export function createApp() {
   const app = express();
 
+  // Required for Render/Vercel proxies to handle cookies/HTTPS correctly
+  app.set("trust proxy", 1);
+
   app.use(
     cors({
       origin: (origin, callback) => {
@@ -29,7 +32,11 @@ export function createApp() {
     }),
   );
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+    }),
+  );
   app.use(cookieParser());
   app.use(express.json({ limit: "1mb" }));
 
