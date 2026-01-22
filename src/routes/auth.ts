@@ -123,7 +123,7 @@ router.get("/me", async (req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   try {
     let token = req.cookies?.auth;
-    
+
     // Fallback to Bearer token
     if (!token) {
       const authHeader = req.headers.authorization;
