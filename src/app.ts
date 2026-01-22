@@ -18,7 +18,13 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: env.clientOrigin,
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+
+        // Allow all origins for now to ensure frontends can connect
+        callback(null, true);
+      },
       credentials: true,
     })
   );
