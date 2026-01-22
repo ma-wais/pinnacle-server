@@ -126,7 +126,7 @@ router.get("/me", async (req, res, next) => {
       const { verifyAuthToken } = await import("../lib/auth.js");
       const payload = verifyAuthToken(token);
       const user = await UserModel.findById(payload.sub).select(
-        "email role accountId verificationStatus"
+        "email role accountId verificationStatus",
       );
       if (!user) return res.json({ user: null });
       return res.json({ user });
