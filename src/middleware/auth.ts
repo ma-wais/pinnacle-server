@@ -16,7 +16,16 @@ declare global {
 }
 
 export function requireAuth(req: Request, _res: Response, next: NextFunction) {
-  const token = req.cookies?.auth;
+  let token = req.cookies?.auth;
+
+  // Fallback to Bearer token
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+  }
+
   if (!token) return next(unauthorized());
 
   try {

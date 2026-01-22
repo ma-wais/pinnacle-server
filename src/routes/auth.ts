@@ -122,7 +122,16 @@ router.post("/logout", async (_req, res) => {
 router.get("/me", async (req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   try {
-    const token = req.cookies?.auth;
+    let token = req.cookies?.auth;
+    
+    // Fallback to Bearer token
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+      }
+    }
+
     if (!token) return res.json({ user: null });
 
     try {
