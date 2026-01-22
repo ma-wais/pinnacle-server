@@ -58,7 +58,7 @@ router.post("/register", async (req, res, next) => {
     const token = signAuthToken({ sub: user._id.toString(), role: user.role });
     res.cookie("auth", token, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: isProduction ? "none" : "lax",
       secure: isProduction,
     });
 
@@ -92,7 +92,7 @@ router.post("/login", async (req, res, next) => {
     const token = signAuthToken({ sub: user._id.toString(), role: user.role });
     res.cookie("auth", token, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: isProduction ? "none" : "lax",
       secure: isProduction,
     });
 
@@ -111,7 +111,7 @@ router.post("/login", async (req, res, next) => {
 router.post("/logout", async (_req, res) => {
   res.clearCookie("auth", {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: isProduction ? "none" : "lax",
     secure: isProduction,
   });
   return res.json({ ok: true });
