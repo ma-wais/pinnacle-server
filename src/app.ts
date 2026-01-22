@@ -26,7 +26,7 @@ export function createApp() {
         callback(null, true);
       },
       credentials: true,
-    })
+    }),
   );
 
   app.use(helmet());
@@ -39,7 +39,7 @@ export function createApp() {
       limit: 200,
       standardHeaders: "draft-8",
       legacyHeaders: false,
-    })
+    }),
   );
 
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
