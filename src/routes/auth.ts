@@ -118,6 +118,7 @@ router.post("/logout", async (_req, res) => {
 });
 
 router.get("/me", async (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
   try {
     const token = req.cookies?.auth;
     if (!token) return res.json({ user: null });
