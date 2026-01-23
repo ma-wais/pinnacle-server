@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-export type DocumentStatus = "pending" | "accepted" | "rejected";
+export type DocumentStatus = "pending" | "approved" | "rejected";
 export type DocumentType = "id" | "proof_of_address" | "business_doc" | "other";
 
 export type DocumentDoc = {
@@ -39,7 +39,7 @@ const documentSchema = new Schema<DocumentDoc>(
     status: {
       type: String,
       required: true,
-      enum: ["pending", "accepted", "rejected"],
+      enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
     uploadedAt: { type: Date, required: true, default: Date.now },

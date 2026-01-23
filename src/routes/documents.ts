@@ -70,9 +70,16 @@ router.get("/:id/download", requireAuth, async (req, res, next) => {
     }
 
     if (doc.cloudinaryUrl) {
-      // Redirect to Cloudinary URL
-      // For images, Cloudinary handles this. For PDFs, it also works.
-      return res.redirect(doc.cloudinaryUrl);
+      const response = await fetch(doc.cloudinaryUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${doc.originalName}"`,
+      );
+      res.setHeader("Content-Type", doc.mimeType);
+      return res.send(buffer);
     }
 
     return res.status(400).json({ error: "No remote file found" });
