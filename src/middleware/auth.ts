@@ -18,11 +18,13 @@ declare global {
 export function requireAuth(req: Request, _res: Response, next: NextFunction) {
   let token = req.cookies?.auth;
 
-  // Fallback to Bearer token
+  // Fallback to Bearer token or Query token (for downloads)
   if (!token) {
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
+    } else if (req.query.token && typeof req.query.token === "string") {
+      token = req.query.token;
     }
   }
 

@@ -11,6 +11,8 @@ export type DocumentDoc = {
   storageName: string;
   mimeType: string;
   size: number;
+  cloudinaryUrl?: string;
+  cloudinaryId?: string;
   status: DocumentStatus;
   uploadedAt: Date;
 };
@@ -32,6 +34,8 @@ const documentSchema = new Schema<DocumentDoc>(
     storageName: { type: String, required: true },
     mimeType: { type: String, required: true },
     size: { type: Number, required: true },
+    cloudinaryUrl: { type: String },
+    cloudinaryId: { type: String },
     status: {
       type: String,
       required: true,
@@ -40,7 +44,7 @@ const documentSchema = new Schema<DocumentDoc>(
     },
     uploadedAt: { type: Date, required: true, default: Date.now },
   },
-  { timestamps: false }
+  { timestamps: false },
 );
 
 export const DocumentModel =

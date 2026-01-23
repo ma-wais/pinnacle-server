@@ -1,9 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
-import path from "node:path";
-import crypto from "node:crypto";
-import fs from "node:fs";
 import { z } from "zod";
+import { storage } from "../lib/cloudinary.js";
 import { requireAuth } from "../middleware/auth.js";
 import { badRequest, forbidden, notFound } from "../lib/httpErrors.js";
 import { DocumentModel } from "../models/Document.js";
@@ -11,25 +9,15 @@ import { UserModel } from "../models/User.js";
 
 const router = Router();
 
-const storageDir = path.resolve(process.cwd(), "storage", "documents");
-if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
-
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, storageDir),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      const name = crypto.randomBytes(16).toString("hex") + ext;
-      cb(null, name);
-    },
-  }),
+  storage: storage,
   limits: {
     fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (_req, file, cb) => {
     const allowed = ["application/pdf", "image/jpeg", "image/png"];
     if (!allowed.includes(file.mimetype))
-      return cb(badRequest("Unsupported file type"));
+      return cb(badRequest("Unsupported file type") as any);
     return cb(null, true);
   },
 });
@@ -50,13 +38,17 @@ router.post("/", requireAuth, upload.single("file"), async (req, res, next) => {
     const meta = uploadMetaSchema.parse(req.body);
     if (!req.file) throw badRequest("Missing file");
 
+    const file = req.file as any;
+
     const doc = await DocumentModel.create({
       userId: req.user!.id,
       type: meta.type,
-      originalName: req.file.originalname,
-      storageName: req.file.filename,
-      mimeType: req.file.mimetype,
-      size: req.file.size,
+      originalName: file.originalname,
+      storageName: file.filename, // This will be the Cloudinary public ID
+      mimeType: file.mimetype,
+      size: file.size,
+      cloudinaryUrl: file.path, // Full Cloudinary URL
+      cloudinaryId: file.filename,
       status: "pending",
       uploadedAt: new Date(),
     });
@@ -77,10 +69,13 @@ router.get("/:id/download", requireAuth, async (req, res, next) => {
       if (!user || user.role !== "admin") throw forbidden();
     }
 
-    const absPath = path.resolve(storageDir, doc.storageName);
-    if (!absPath.startsWith(storageDir + path.sep)) throw forbidden();
+    if (doc.cloudinaryUrl) {
+      // Redirect to Cloudinary URL
+      // For images, Cloudinary handles this. For PDFs, it also works.
+      return res.redirect(doc.cloudinaryUrl);
+    }
 
-    return res.download(absPath, doc.originalName);
+    return res.status(400).json({ error: "No remote file found" });
   } catch (err) {
     return next(err);
   }

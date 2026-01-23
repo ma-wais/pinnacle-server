@@ -1,18 +1,14 @@
 import { Router } from "express";
 import { z } from "zod";
-import path from "node:path";
-import fs from "node:fs";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { UserModel } from "../models/User.js";
 import { UserProfileModel } from "../models/UserProfile.js";
 import { DocumentModel } from "../models/Document.js";
-import { notFound, forbidden } from "../lib/httpErrors.js";
+import { notFound } from "../lib/httpErrors.js";
 
 const router = Router();
 
 router.use(requireAuth, requireAdmin);
-
-const storageDir = path.resolve(process.cwd(), "storage", "documents");
 
 router.get("/users", async (_req, res) => {
   const users = await UserModel.find()
@@ -37,10 +33,11 @@ router.get("/documents/:id/download", async (req, res, next) => {
     const doc = await DocumentModel.findById(req.params.id);
     if (!doc) throw notFound("Document not found");
 
-    const absPath = path.resolve(storageDir, doc.storageName);
-    if (!absPath.startsWith(storageDir + path.sep)) throw forbidden();
+    if (doc.cloudinaryUrl) {
+      return res.redirect(doc.cloudinaryUrl);
+    }
 
-    return res.download(absPath, doc.originalName);
+    return res.status(400).json({ error: "No remote file found" });
   } catch (err) {
     return next(err);
   }
