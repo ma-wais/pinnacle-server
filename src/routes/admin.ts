@@ -76,6 +76,30 @@ router.delete("/users/:id", async (req, res, next) => {
   }
 });
 
+router.get("/documents/:id/preview", async (req, res, next) => {
+  try {
+    const doc = await DocumentModel.findById(req.params.id);
+    if (!doc) throw notFound("Document not found");
+
+    if (doc.cloudinaryUrl) {
+      const response = await fetch(doc.cloudinaryUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      res.setHeader(
+        "Content-Disposition",
+        `inline; filename="${doc.originalName}"`,
+      );
+      res.setHeader("Content-Type", doc.mimeType);
+      return res.send(buffer);
+    }
+
+    return res.status(400).json({ error: "No remote file found" });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 router.get("/documents/:id/download", async (req, res, next) => {
   try {
     const doc = await DocumentModel.findById(req.params.id);
