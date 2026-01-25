@@ -11,6 +11,36 @@ const router = Router();
 
 router.use(requireAuth, requireAdmin);
 
+router.get("/stats", async (_req, res) => {
+  const [
+    totalUsers,
+    unverifiedUsers,
+    verifiedUsers,
+    totalDocuments,
+    pendingDocuments,
+    approvedDocuments,
+    rejectedDocuments,
+  ] = await Promise.all([
+    UserModel.countDocuments(),
+    UserModel.countDocuments({ verificationStatus: "unverified" }),
+    UserModel.countDocuments({ verificationStatus: "verified" }),
+    DocumentModel.countDocuments(),
+    DocumentModel.countDocuments({ status: "pending" }),
+    DocumentModel.countDocuments({ status: "approved" }),
+    DocumentModel.countDocuments({ status: "rejected" }),
+  ]);
+
+  return res.json({
+    totalUsers,
+    unverifiedUsers,
+    verifiedUsers,
+    totalDocuments,
+    pendingDocuments,
+    approvedDocuments,
+    rejectedDocuments,
+  });
+});
+
 router.get("/users", async (_req, res) => {
   const users = await UserModel.find()
     .select("email role accountId verificationStatus createdAt")
