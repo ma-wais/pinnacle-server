@@ -4,6 +4,7 @@ import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { UserModel } from "../models/User.js";
 import { UserProfileModel } from "../models/UserProfile.js";
 import { DocumentModel } from "../models/Document.js";
+import { ComplaintModel } from "../models/Complaint.js";
 import { notFound } from "../lib/httpErrors.js";
 import cloudinary from "../lib/cloudinary.js";
 
@@ -41,11 +42,134 @@ router.get("/stats", async (_req, res) => {
   });
 });
 
-router.get("/users", async (_req, res) => {
-  const users = await UserModel.find()
+router.get("/complaints", async (req, res) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const status = req.query.status as string;
+
+  const query: any = {};
+  if (status && (status === "pending" || status === "resolved")) {
+    query.status = status;
+  }
+
+  const total = await ComplaintModel.countDocuments(query);
+  const complaints = await ComplaintModel.find(query)
+    .populate({
+      path: "userId",
+      select: "email",
+    })
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+
+  // Manually attach profiles since populate-of-virtuals or deep-populate might be tricky depending on setup
+  const complaintsWithProfiles = await Promise.all(
+    complaints.map(async (c: any) => {
+      const profile = await UserProfileModel.findOne({ userId: c.userId?._id });
+      const plain = c.toObject();
+      if (plain.userId) {
+        plain.userId.profile = profile;
+      }
+      return plain;
+    }),
+  );
+
+  return res.json({
+    complaints: complaintsWithProfiles,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+    },
+  });
+});
+
+router.get("/documents", async (req, res) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const status = req.query.status as string;
+
+  const query: any = {};
+  if (status && ["pending", "approved", "rejected"].includes(status)) {
+    query.status = status;
+  }
+
+  const total = await DocumentModel.countDocuments(query);
+  const documents = await DocumentModel.find(query)
+    .populate({
+      path: "userId",
+      select: "email accountId",
+    })
+    .sort({ uploadedAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+
+  const docsWithProfiles = await Promise.all(
+    documents.map(async (doc: any) => {
+      const profile = await UserProfileModel.findOne({
+        userId: doc.userId?._id,
+      });
+      const plain = doc.toObject();
+      if (plain.userId) {
+        plain.userId.profile = profile;
+      }
+      return plain;
+    }),
+  );
+
+  return res.json({
+    documents: docsWithProfiles,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+    },
+  });
+});
+
+router.patch("/complaints/:id/status", async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    if (!["pending", "resolved"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+    const complaint = await ComplaintModel.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true },
+    );
+    if (!complaint) throw notFound("Complaint not found");
+    return res.json({ complaint });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.get("/users", async (req, res) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const status = req.query.status as string;
+
+  const query: any = {};
+  if (status && (status === "verified" || status === "unverified")) {
+    query.verificationStatus = status;
+  }
+
+  const total = await UserModel.countDocuments(query);
+  const users = await UserModel.find(query)
     .select("email role accountId verificationStatus createdAt")
-    .sort({ createdAt: -1 });
-  return res.json({ users });
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+
+  return res.json({
+    users,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+    },
+  });
 });
 
 router.get("/users/export", async (_req, res) => {
