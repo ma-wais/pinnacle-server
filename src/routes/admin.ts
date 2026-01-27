@@ -162,8 +162,18 @@ router.get("/users", async (req, res) => {
     .skip((page - 1) * limit)
     .limit(limit);
 
+  const usersWithProfile = await Promise.all(
+    users.map(async (user) => {
+      const profile = await UserProfileModel.findOne({ userId: user._id });
+      return {
+        ...user.toObject(),
+        fullName: profile?.fullName || "",
+      };
+    }),
+  );
+
   return res.json({
-    users,
+    users: usersWithProfile,
     pagination: {
       total,
       page,
