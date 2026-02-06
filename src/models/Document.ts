@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
 export type DocumentStatus = "pending" | "approved" | "rejected";
-export type DocumentType = "id" | "proof_of_address" | "business_doc" | "other";
+export type DocumentType = "all" | "id" | "proof_of_address" | "business_doc";
 
 export type DocumentDoc = {
   _id: mongoose.Types.ObjectId;
@@ -28,7 +28,7 @@ const documentSchema = new Schema<DocumentDoc>(
     type: {
       type: String,
       required: true,
-      enum: ["id", "proof_of_address", "business_doc", "other"],
+      enum: ["all", "id", "proof_of_address", "business_doc"],
     },
     originalName: { type: String, required: true },
     storageName: { type: String, required: true },

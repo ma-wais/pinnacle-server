@@ -12,11 +12,11 @@ cloudinary.config({
 
 export const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    // @ts-ignore
-    folder: "pinnacle_documents",
-    allowed_formats: ["jpg", "png", "jpeg", "pdf"],
-    resource_type: "auto",
+  params: async (_req: any, _file: any) => {
+    return {
+      folder: "pinnacle_documents",
+      resource_type: "auto",
+    };
   },
 });
 

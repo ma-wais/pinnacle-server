@@ -15,9 +15,7 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (_req, file, cb) => {
-    const allowed = ["application/pdf", "image/jpeg", "image/png"];
-    if (!allowed.includes(file.mimetype))
-      return cb(badRequest("Unsupported file type") as any);
+    // Allow all file types as requested
     return cb(null, true);
   },
 });
@@ -30,7 +28,7 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 const uploadMetaSchema = z.object({
-  type: z.enum(["id", "proof_of_address", "business_doc", "other"]),
+  type: z.enum(["all", "id", "proof_of_address", "business_doc"]),
 });
 
 router.post("/", requireAuth, upload.single("file"), async (req, res, next) => {
@@ -44,11 +42,11 @@ router.post("/", requireAuth, upload.single("file"), async (req, res, next) => {
       userId: req.user!.id,
       type: meta.type,
       originalName: file.originalname,
-      storageName: file.filename, // This will be the Cloudinary public ID
+      storageName: file.filename || file.originalname || "unknown", // Fallback for some cloudinary responses
       mimeType: file.mimetype,
       size: file.size,
       cloudinaryUrl: file.path, // Full Cloudinary URL
-      cloudinaryId: file.filename,
+      cloudinaryId: file.filename || file.originalname || "unknown",
       status: "pending",
       uploadedAt: new Date(),
     });
