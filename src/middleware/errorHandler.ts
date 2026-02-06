@@ -15,15 +15,13 @@ export function errorHandler(
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: "Validation failed",
-      details: err.errors.map((e) => ({ path: e.path, message: e.message })),
+      details: err.issues.map((e) => ({ path: e.path, message: e.message })),
     });
   }
 
   console.error(err);
-  return res
-    .status(500)
-    .json({
-      error: "Internal Server Error",
-      message: err instanceof Error ? err.message : "Unknown error",
-    });
+  return res.status(500).json({
+    error: "Internal Server Error",
+    message: err instanceof Error ? err.message : "Unknown error",
+  });
 }
