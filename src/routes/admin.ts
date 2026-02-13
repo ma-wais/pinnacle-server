@@ -216,6 +216,12 @@ router.get("/users/:id", async (req, res) => {
 
 router.delete("/users/:id", async (req, res, next) => {
   try {
+    if (req.params.id === req.user!.id) {
+      return res
+        .status(400)
+        .json({ error: "You cannot delete your own admin account" });
+    }
+
     const user = await UserModel.findById(req.params.id);
     if (!user) throw notFound("User not found");
 

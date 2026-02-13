@@ -10,6 +10,10 @@ export type UserDoc = {
   role: UserRole;
   accountId: string;
   verificationStatus: VerificationStatus;
+  isEmailVerified: boolean;
+  emailVerificationToken?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -37,8 +41,12 @@ const userSchema = new Schema<UserDoc>(
       enum: ["unverified", "verified"],
       default: "unverified",
     },
+    isEmailVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const UserModel =
