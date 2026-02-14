@@ -21,6 +21,8 @@ export const env = {
     from:
       process.env.SMTP_FROM || "Pinnacle Metals <noreply@pinnaclemetals.co.uk>",
   },
+  goldApiKey: process.env.GOLD_API_KEY,
+  copperPriceUrl: process.env.COPPER_PRICE_URL,
 };
 
 export const isProduction = env.nodeEnv === "production";
