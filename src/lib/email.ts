@@ -5,6 +5,10 @@ const transporter = nodemailer.createTransport({
   host: env.smtp.host,
   port: env.smtp.port,
   secure: env.smtp.secure,
+  requireTLS: env.smtp.requireTLS,
+  tls: {
+    minVersion: "TLSv1.2",
+  },
   auth: {
     user: env.smtp.user,
     pass: env.smtp.pass,

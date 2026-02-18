@@ -13,9 +13,10 @@ export const env = {
   jwtSecret: requireEnv("JWT_SECRET"),
   clientOrigin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
   smtp: {
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    host: process.env.SMTP_HOST || "smtp.office365.com",
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE === "true",
+    requireTLS: process.env.SMTP_REQUIRE_TLS !== "false",
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
     from:
