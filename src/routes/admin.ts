@@ -5,6 +5,7 @@ import { UserModel } from "../models/User.js";
 import { UserProfileModel } from "../models/UserProfile.js";
 import { DocumentModel } from "../models/Document.js";
 import { ComplaintModel } from "../models/Complaint.js";
+import { PricingConfigModel } from "../models/PricingConfig.js";
 import { notFound } from "../lib/httpErrors.js";
 import cloudinary from "../lib/cloudinary.js";
 
@@ -40,6 +41,48 @@ router.get("/stats", async (_req, res) => {
     approvedDocuments,
     rejectedDocuments,
   });
+});
+
+router.get("/pricing", async (_req, res) => {
+  let config = await PricingConfigModel.findOne();
+
+  if (!config) {
+    config = await PricingConfigModel.create({
+      baseCopperPrice: 0,
+      updatedAt: new Date(),
+    });
+  }
+
+  return res.json({
+    baseCopperPrice: config.baseCopperPrice,
+    updatedAt: config.updatedAt,
+  });
+});
+
+const pricingSchema = z.object({
+  baseCopperPrice: z.number().min(0),
+});
+
+router.patch("/pricing", async (req, res, next) => {
+  try {
+    const input = pricingSchema.parse(req.body);
+    let config = await PricingConfigModel.findOne();
+
+    if (!config) {
+      config = new PricingConfigModel();
+    }
+
+    config.baseCopperPrice = input.baseCopperPrice;
+    config.updatedAt = new Date();
+    await config.save();
+
+    return res.json({
+      baseCopperPrice: config.baseCopperPrice,
+      updatedAt: config.updatedAt,
+    });
+  } catch (err) {
+    return next(err);
+  }
 });
 
 router.get("/complaints", async (req, res) => {
