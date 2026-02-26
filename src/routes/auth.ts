@@ -8,11 +8,7 @@ import { generateCandidateAccountId } from "../lib/accountId.js";
 import { badRequest, unauthorized, notFound } from "../lib/httpErrors.js";
 import { signAuthToken } from "../lib/auth.js";
 import { env, isProduction } from "../config/env.js";
-import {
-  sendEmail,
-  generateResetPasswordEmail,
-  generateVerificationEmail,
-} from "../lib/email.js";
+import { sendEmail, generateResetPasswordEmail } from "../lib/email.js";
 
 const router = Router();
 
@@ -43,16 +39,13 @@ router.post("/register", async (req, res, next) => {
       accountId = generateCandidateAccountId();
     }
 
-    const emailVerificationToken = crypto.randomBytes(32).toString("hex");
-
     const user = await UserModel.create({
       email: input.email,
       passwordHash,
       role: "user",
       accountId,
       verificationStatus: "unverified",
-      isEmailVerified: false,
-      emailVerificationToken,
+      isEmailVerified: true,
     });
 
     await UserProfileModel.create({
@@ -63,14 +56,6 @@ router.post("/register", async (req, res, next) => {
       city: input.city,
       postcode: input.postcode,
       businessName: input.businessName,
-    });
-
-    // Send verification email
-    const verificationLink = `${env.clientOrigin}/verify-email?token=${emailVerificationToken}`;
-    await sendEmail({
-      to: user.email,
-      subject: "Verify your email - Pinnacle Metals",
-      html: generateVerificationEmail(verificationLink),
     });
 
     const token = signAuthToken({ sub: user._id.toString(), role: user.role });
