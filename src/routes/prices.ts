@@ -5,9 +5,24 @@ import { PricingConfigModel } from "../models/PricingConfig.js";
 const router = Router();
 
 const materialFormulas = [
-  { key: "dry_bright_wire", label: "Dry Bright Wire", multiplier: 1 },
-  { key: "household_cable", label: "Household Cable", multiplier: 1 },
-  { key: "mixed_copper", label: "Mixed Copper", multiplier: 1 },
+  {
+    key: "dry_bright_wire",
+    label: "Dry Bright Wire",
+    recoveryRate: 0.97,
+    processingDeduction: 0.02,
+  },
+  {
+    key: "household_cable",
+    label: "Household Cable",
+    recoveryRate: 0.68,
+    processingDeduction: 0.03,
+  },
+  {
+    key: "mixed_copper",
+    label: "Mixed Copper",
+    recoveryRate: 0.9,
+    processingDeduction: 0.02,
+  },
 ];
 
 async function getLiveCopperPrice() {
@@ -111,15 +126,23 @@ router.get("/copper", async (_req, res) => {
 router.get("/materials", async (_req, res) => {
   const base = await resolveBaseCopperPrice();
 
-  const materials = materialFormulas.map((item) => ({
-    key: item.key,
-    label: item.label,
-    formula: `baseCopperPrice * ${item.multiplier}`,
-    multiplier: item.multiplier,
-    price: parseFloat((base.price * item.multiplier).toFixed(2)),
-    currency: "GBP",
-    unit: "per Tonne",
-  }));
+  const materials = materialFormulas.map((item) => {
+    const effectiveMultiplier = parseFloat(
+      (item.recoveryRate - item.processingDeduction).toFixed(4),
+    );
+
+    return {
+      key: item.key,
+      label: item.label,
+      formula: `baseCopperPrice * (${item.recoveryRate} - ${item.processingDeduction})`,
+      recoveryRate: item.recoveryRate,
+      processingDeduction: item.processingDeduction,
+      multiplier: effectiveMultiplier,
+      price: parseFloat((base.price * effectiveMultiplier).toFixed(2)),
+      currency: "GBP",
+      unit: "per Tonne",
+    };
+  });
 
   return res.json({
     baseCopperPrice: base.price,

@@ -30,12 +30,27 @@ export async function sendEmail({
     return;
   }
 
-  await transporter.sendMail({
-    from: env.smtp.from,
-    to,
-    subject,
-    html,
-  });
+  try {
+    await transporter.sendMail({
+      from: env.smtp.from,
+      to,
+      subject,
+      html,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const smtpAuthDisabled =
+      /smtpclientauthentication is disabled|535\s*5\.7\.139/i.test(message);
+
+    if (env.nodeEnv !== "production" || smtpAuthDisabled) {
+      console.warn("Email send failed. Continuing without blocking flow.");
+      console.warn(message);
+      console.log(`To: ${to}\nSubject: ${subject}\nContent: ${html}`);
+      return;
+    }
+
+    throw error;
+  }
 }
 
 export function generateResetPasswordEmail(resetLink: string) {
