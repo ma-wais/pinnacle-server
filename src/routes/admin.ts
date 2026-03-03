@@ -49,18 +49,27 @@ router.get("/pricing", async (_req, res) => {
   if (!config) {
     config = await PricingConfigModel.create({
       baseCopperPrice: 0,
+      baseAluminumPrice: 0,
+      baseLeadPrice: 0,
+      baseZincPrice: 0,
       updatedAt: new Date(),
     });
   }
 
   return res.json({
     baseCopperPrice: config.baseCopperPrice,
+    baseAluminumPrice: config.baseAluminumPrice,
+    baseLeadPrice: config.baseLeadPrice,
+    baseZincPrice: config.baseZincPrice,
     updatedAt: config.updatedAt,
   });
 });
 
 const pricingSchema = z.object({
   baseCopperPrice: z.number().min(0),
+  baseAluminumPrice: z.number().min(0),
+  baseLeadPrice: z.number().min(0),
+  baseZincPrice: z.number().min(0),
 });
 
 router.patch("/pricing", async (req, res, next) => {
@@ -73,11 +82,17 @@ router.patch("/pricing", async (req, res, next) => {
     }
 
     config.baseCopperPrice = input.baseCopperPrice;
+    config.baseAluminumPrice = input.baseAluminumPrice;
+    config.baseLeadPrice = input.baseLeadPrice;
+    config.baseZincPrice = input.baseZincPrice;
     config.updatedAt = new Date();
     await config.save();
 
     return res.json({
       baseCopperPrice: config.baseCopperPrice,
+      baseAluminumPrice: config.baseAluminumPrice,
+      baseLeadPrice: config.baseLeadPrice,
+      baseZincPrice: config.baseZincPrice,
       updatedAt: config.updatedAt,
     });
   } catch (err) {
