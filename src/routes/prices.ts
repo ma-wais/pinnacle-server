@@ -153,4 +153,35 @@ router.get("/materials", async (_req, res) => {
   });
 });
 
+router.get("/base-metals", async (_req, res) => {
+  const [copper, config] = await Promise.all([
+    resolveBaseCopperPrice(),
+    PricingConfigModel.findOne(),
+  ]);
+
+  return res.json({
+    lastUpdated: new Date().toISOString(),
+    metals: {
+      copper: {
+        label: "LME Copper",
+        price: copper.price,
+        source: copper.source,
+        status: copper.status,
+      },
+      aluminum: {
+        label: "LME Aluminum",
+        price: config?.baseAluminumPrice ?? 0,
+      },
+      lead: {
+        label: "LME Lead",
+        price: config?.baseLeadPrice ?? 0,
+      },
+      zinc: {
+        label: "LME Zinc",
+        price: config?.baseZincPrice ?? 0,
+      },
+    },
+  });
+});
+
 export default router;
